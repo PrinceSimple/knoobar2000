@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #3b82f6;
+  --color-secondary: #6366f1;
+  --color-accent: #8b5cf6;
+  --color-background: #171717;
+  --color-surface: #262626;
+  --color-border: #404040;
+  --color-text: #fafafa;
+  --color-text-secondary: #a3a3a3;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #525252;
+}
+
+.track-row {
+  @apply hover:bg-neutral-800 cursor-pointer transition-colors;
+}
+
+.track-row.selected {
+  @apply bg-blue-900/30;
+}
+
+.column-header {
+  @apply px-3 py-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider select-none;
+}
+
+.facet-item {
+  @apply flex items-center gap-2 px-3 py-2 hover:bg-neutral-800 cursor-pointer transition-colors;
+}
+
+.facet-item.active {
+  @apply bg-neutral-700 text-blue-400;
+}
