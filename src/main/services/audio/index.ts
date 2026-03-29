@@ -148,18 +148,15 @@ function cleanup(): void {
   }
 
   if (currentSpeaker) {
-    console.time("cleanup-speaker");
     try {
       currentSpeaker.destroy();
     } catch {
       /* ignore */
     }
-    console.timeEnd("cleanup-speaker");
     currentSpeaker = null;
   }
 
   if (currentProcess) {
-    console.time("cleanup-process");
     try {
       currentProcess.stdin?.destroy();
       currentProcess.stdout?.destroy();
@@ -168,7 +165,6 @@ function cleanup(): void {
     } catch {
       /* ignore */
     }
-    console.timeEnd("cleanup-process");
     currentProcess = null;
   }
 }

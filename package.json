@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "audio-buffer-utils": "^5.1.2",
+    "audio-decode": "^3.5.0",
     "better-sqlite3": "^11.7.0",
     "chokidar": "^4.0.3",
     "fluent-ffmpeg": "^2.1.3",

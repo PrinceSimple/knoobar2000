@@ -46,9 +46,7 @@ export function setupIpcHandlers(): void {
   });
 
   ipcMain.on("player:pause", () => {
-    console.time("ipc-pause-received");
     pause();
-    console.timeEnd("ipc-pause-received");
   });
 
   ipcMain.on("player:resume", () => {
@@ -67,10 +65,7 @@ export function setupIpcHandlers(): void {
     setVolume(volume);
   });
 
-  ipcMain.handle("player:setDevice", (_event, _deviceId: string) => {
-    // Device selection would require platform-specific implementation
-    console.log("Device selection not fully implemented");
-  });
+  ipcMain.handle("player:setDevice", (_event, _deviceId: string) => {});
 
   ipcMain.handle("player:getDevices", async () => {
     return getAudioDevices();
@@ -183,10 +178,7 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle(
     "playlists:reorderTrack",
-    (_event, playlistId: string, fromIndex: number, toIndex: number) => {
-      // Reordering would require updating positions for all affected tracks
-      console.log("Reorder not implemented:", playlistId, fromIndex, toIndex);
-    },
+    (_event, playlistId: string, fromIndex: number, toIndex: number) => {},
   );
 
   // Settings handlers
@@ -241,6 +233,4 @@ export function setupIpcHandlers(): void {
 
   // Initialize watcher on startup
   startWatching().catch(console.error);
-
-  console.log("IPC handlers registered");
 }

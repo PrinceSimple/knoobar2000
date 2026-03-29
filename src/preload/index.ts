@@ -6,9 +6,7 @@ const api = {
   player: {
     play: (filePath: string) => ipcRenderer.invoke("player:play", filePath),
     pause: () => {
-      console.log("preload: BEFORE SEND");
       ipcRenderer.send("player:pause");
-      console.log("preload: AFTER SEND");
     },
     resume: () => ipcRenderer.send("player:resume"),
     stop: () => ipcRenderer.send("player:stop"),

@@ -1,5 +1,16 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import { rendererAudioPlayer } from "../services/audioPlayer";
+
+type AppSettings = {
+  watchFolders: string[];
+  outputDevice: string;
+  volume: number;
+  replayGainEnabled: boolean;
+  replayGainPreamp: number;
+  theme: "dark" | "light";
+  libraryView: "list" | "grid";
+};
 
 export interface Track {
   id: string;
@@ -61,6 +72,24 @@ export const usePlayerStore = defineStore("player", () => {
   const formattedPosition = computed(() => formatTime(currentPosition.value));
   const formattedDuration = computed(() => formatTime(duration.value));
 
+  const RENDERER_FORMATS = [
+    ".flac",
+    ".wav",
+    ".mp3",
+    ".aac",
+    ".ogg",
+    ".m4a",
+    ".wma",
+    ".alac",
+    ".wv",
+  ];
+  const DSD_FORMATS = [".dsf", ".dff"];
+
+  function useRendererPlayback(filePath: string): boolean {
+    const ext = filePath.toLowerCase().slice(filePath.lastIndexOf("."));
+    return RENDERER_FORMATS.includes(ext);
+  }
+
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -68,7 +97,26 @@ export const usePlayerStore = defineStore("player", () => {
   }
 
   function init() {
+    rendererAudioPlayer.init({
+      onTimeUpdate: (position, dur) => {
+        currentPosition.value = position;
+        if (!isNaN(dur) && dur > 0) {
+          duration.value = dur;
+        }
+      },
+      onEnded: () => {
+        next();
+      },
+      onError: (error) => {},
+      onStatusChange: (newStatus) => {
+        status.value = newStatus;
+      },
+    });
+
     window.api.player.onPlaybackState((state: PlaybackState) => {
+      if (state.status === "stopped" && useRendererPlayback(state.filePath)) {
+        return;
+      }
       status.value = state.status;
       if (state.duration) {
         duration.value = state.duration;
@@ -76,12 +124,19 @@ export const usePlayerStore = defineStore("player", () => {
     });
 
     window.api.player.onTimeUpdate((time: TimeUpdate) => {
+      if (
+        status.value === "playing" &&
+        useRendererPlayback(currentTrack.value?.filePath || "")
+      ) {
+        return;
+      }
       currentPosition.value = time.position;
       duration.value = time.duration;
     });
 
-    window.api.settings.get().then((settings) => {
+    window.api.settings.get().then((settings: AppSettings) => {
       volume.value = settings.volume;
+      rendererAudioPlayer.setVolume(settings.volume);
     });
   }
 
@@ -89,36 +144,66 @@ export const usePlayerStore = defineStore("player", () => {
     currentTrack.value = track;
     currentPosition.value = 0;
     duration.value = track.duration;
-    await window.api.player.play(track.filePath);
-    window.api.library.updatePlayCount(track.id);
+
+    if (useRendererPlayback(track.filePath)) {
+      await rendererAudioPlayer.play(track.filePath, 0);
+      window.api.library.updatePlayCount(track.id);
+    } else {
+      await window.api.player.play(track.filePath);
+      window.api.library.updatePlayCount(track.id);
+    }
   }
 
   async function play() {
-    if (currentTrack.value) {
+    if (!currentTrack.value) return;
+
+    if (useRendererPlayback(currentTrack.value.filePath)) {
+      await rendererAudioPlayer.resume();
+    } else {
       await window.api.player.resume();
     }
   }
 
   function pause() {
-    console.log("store-pause: START");
-    window.api.player.pause();
-    console.log("store-pause: END");
+    if (
+      currentTrack.value &&
+      useRendererPlayback(currentTrack.value.filePath)
+    ) {
+      rendererAudioPlayer.pause();
+    } else {
+      window.api.player.pause();
+    }
   }
 
   async function stop() {
-    await window.api.player.stop();
+    if (
+      currentTrack.value &&
+      useRendererPlayback(currentTrack.value.filePath)
+    ) {
+      rendererAudioPlayer.stop();
+    } else {
+      await window.api.player.stop();
+    }
     currentTrack.value = null;
     currentPosition.value = 0;
     duration.value = 0;
   }
 
   async function seek(position: number) {
-    await window.api.player.seek(position);
+    if (
+      currentTrack.value &&
+      useRendererPlayback(currentTrack.value.filePath)
+    ) {
+      rendererAudioPlayer.seek(position);
+    } else {
+      await window.api.player.seek(position);
+    }
     currentPosition.value = position;
   }
 
   async function setVolume(vol: number) {
     volume.value = vol;
+    rendererAudioPlayer.setVolume(vol);
     await window.api.player.setVolume(vol);
   }
 
